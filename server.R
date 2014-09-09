@@ -66,7 +66,9 @@ shinyServer(function(input, output, session) {
       location <- locations[locations$place == event$id,]
       selectedLocation <<- location
       content <- as.character(tagList(
-        tags$strong(paste(location$place))
+        tags$strong(paste(location$place)),
+        tags$br(),
+        paste("Depicted", location$n, "times between", input$year_range[1], "and", input$year_range[2])
       ))
       map$showPopup(event$lat, event$lng, content, event$id)
     })
