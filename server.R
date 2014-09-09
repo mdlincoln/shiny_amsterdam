@@ -19,6 +19,19 @@ bindEvent <- function(eventExpr, callback, env=parent.frame(), quoted=FALSE) {
 
 shinyServer(function(input, output, session) {
 
+  makeReactiveBinding('selectedLocation')
+
+  # Draw only those locations within a certain year range, and tally the
+  # number of works made showing each location
+  select_locations <- reactive({
+    selected <- location_data %>%
+    filter(dating.yearLate >= input$year_range[1] &
+             dating.yearEarly <= input$year_range[2]) %>%
+    group_by(place, latitude, longitude) %>%
+    tally()
+    return(selected)
+  })
+
   # Create the map; this is not the "real" map, but rather a proxy
   # object that lets us control the leaflet map on the page.
   map <- createLeafletMap(session, 'map')
