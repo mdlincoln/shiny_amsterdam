@@ -36,17 +36,23 @@ shinyServer(function(input, output, session) {
   # object that lets us control the leaflet map on the page.
   map <- createLeafletMap(session, 'map')
 
+  # Functions to run every time the map or filters are changed
   observe({
 
+    locations <- select_locations()
+
+    # Re-draw the map with each change
     map$clearShapes()
 
-    print(input$year_range)
+    # Draw circles for each locaiton on the map
+    map$addCircle(
+      lat = locations$latitude,
+      lng = locations$longitude,
+      radius = ((100 * locations$n) / max(10, input$map_zoom)^2),
+      layerId = locations$place
+    )
+  })
 
-    select_locations <- location_data %>%
-      filter(dating.yearLate >= input$year_range[1] &
-               dating.yearEarly <= input$year_range[2]) %>%
-      group_by(place, latitude, longitude) %>%
-      tally()
 
     print(select_locations)
 
