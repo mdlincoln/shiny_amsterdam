@@ -53,14 +53,23 @@ shinyServer(function(input, output, session) {
     )
   })
 
+  # Pop-ups on click
+  observe({
+    event <- input$map_shape_click
+    if (is.null(event))
+      return()
+    map$clearPopups()
 
-    print(select_locations)
+    locations <- select_locations()
 
-    map$addCircle(
-      lat = select_locations$latitude,
-      lng = select_locations$longitude,
-      radius = ((100 * select_locations$n) / max(10, input$map_zoom)^2)
-    )
+    isolate({
+      location <- locations[locations$place == event$id,]
+      selectedLocation <<- location
+      content <- as.character(tagList(
+        tags$strong(paste(location$place))
+      ))
+      map$showPopup(event$lat, event$lng, content, event$id)
+    })
   })
 
   output$desc <- reactive({
@@ -72,5 +81,4 @@ shinyServer(function(input, output, session) {
       zoom = input$map_zoom
     )
   })
-
 })
