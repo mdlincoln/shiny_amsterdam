@@ -83,4 +83,14 @@ shinyServer(function(input, output, session) {
       zoom = input$map_zoom
     )
   })
+
+  output$location_plot <- renderPlot({
+    if(is.null(selectedLocation)) {
+      return(NA)
+    } else {
+      selected <- location_data %>% filter(place == as.character(selectedLocation$place))
+      p <- ggplot(selected, aes(x = dating.yearEarly)) + geom_histogram() + xlim(input$year_range[1], input$year_range[2])
+      print(p)
+    }
+  })
 })
