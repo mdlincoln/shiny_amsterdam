@@ -41,8 +41,8 @@ shinyUI(fluidPage(
 #            tableOutput('data')
     ),
     column(5,
-           h4(id='cityTimeSeriesLabel', class='shiny-text-output')
-#            plotOutput('cityTimeSeries', width='100%', height='250px')
+#            h4(id='cityTimeSeriesLabel', class='shiny-text-output')
+            plotOutput('location_plot', width='100%', height='250px')
     )
   )
 ))
