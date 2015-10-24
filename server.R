@@ -28,13 +28,16 @@ shinyServer(function(input, output, session) {
   output$amsterdam_map <- renderLeaflet({
     leaflet() %>%
       addTiles() %>%
-      fitBounds(lng1 = global_min_lon, lat1 = global_min_lat, lng2 = global_max_lon, lat2 = global_max_lat)
+      fitBounds(lng1 = global_min_lon, lat1 = global_min_lat,
+                lng2 = global_max_lon, lat2 = global_max_lat)
   })
 
   observe({
     leafletProxy("amsterdam_map", data = map_aggregate()) %>%
       clearShapes() %>%
-      addCircles(radius = ~sqrt(count) * 10, popup = ~short_place)
+      addCircles(radius = ~sqrt(count) * 10, popup = ~short_place,
+                 layerId = ~short_place)
+  })
   })
 
 })
