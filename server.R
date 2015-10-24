@@ -38,6 +38,26 @@ shinyServer(function(input, output, session) {
       addCircles(radius = ~sqrt(count) * 10, popup = ~short_place,
                  layerId = ~short_place)
   })
+
+  clicked_place <- reactive({
+    if(is.null(input$amsterdam_map_shape_click)) {
+      return(NULL)
+    } else {
+      return(input$amsterdam_map_shape_click$id)
+    }
+  })
+
+  observe({
+    if(is.null(clicked_place())) {
+      hist_data <- location_data
+    } else {
+      hist_data <- location_data %>%
+        filter(short_place == clicked_place())
+    }
+
+    hist_data %>%
+      ggvis(~dating.year) %>%
+      bind_shiny("location_hist")
   })
 
 })

@@ -5,15 +5,14 @@ year_slider <- sliderInput("year_slider", label = "Year Range", min = 1550, max 
 
 amsterdam_map <- leafletOutput("amsterdam_map", width = "100%", height = 600)
 
-# location_hist <- ggvisOutput("location_hist")
+location_hist <- ggvisOutput("location_hist")
 
 header <- dashboardHeader(title = title)
 
 sidebar <- dashboardSidebar(disable = TRUE)
 
 body <- dashboardBody(
-  box(width = 12, amsterdam_map, year_slider)
-  # box(width = 6, location_hist)
+  box(width = 12, amsterdam_map, year_slider, location_hist)
 )
 
 dashboardPage(
