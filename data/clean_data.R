@@ -4,9 +4,10 @@
 library(dplyr)
 library(tidyr)
 library(stringr)
+library(readr)
 
-orig_landscape_data <- read.csv("data/object_data.csv")
-name_coordinates <- read.csv("data/location_coordinates.csv")
+orig_landscape_data <- read_csv("data/object_data.csv")
+name_coordinates <- read_csv("data/location_coordinates.csv")
 
 # Only use those named coordinates with exact values
 name_coordinates <- name_coordinates %>% filter(!(is.na(longitude) & is.na(latitude)))

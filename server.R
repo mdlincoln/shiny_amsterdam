@@ -10,9 +10,16 @@ shinyServer(function(input, output, session) {
     input$year_slider[2]
   })
 
+  place_types <- reactive({
+    input$place_types
+  })
+
   map_objects <- reactive({
     location_data %>%
-      filter(dating.yearEarly < max_year() & dating.yearLate >= min_year())
+      filter(
+        dating.yearEarly < max_year() &
+          dating.yearLate >= min_year() &
+          type %in% place_types())
   })
 
   map_aggregate <- reactive({
@@ -27,7 +34,7 @@ shinyServer(function(input, output, session) {
 
   output$amsterdam_map <- renderLeaflet({
     leaflet() %>%
-      addTiles() %>%
+      addProviderTiles("Acetate.terrain") %>%
       fitBounds(lng1 = global_min_lon, lat1 = global_min_lat,
                 lng2 = global_max_lon, lat2 = global_max_lat)
   })
