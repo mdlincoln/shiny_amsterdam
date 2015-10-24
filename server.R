@@ -78,7 +78,7 @@ shinyServer(function(input, output, session) {
       mutate(
         obj_no = substring(id, 4),
         object_link = paste0("<a href='https://www.rijksmuseum.nl/en/collection/", obj_no, "'>", obj_no, "</a>"),
-        thumb_link = paste0(str_replace(webImage.url, "=s0", "=s300")),
+        thumb_link = paste0(str_replace(webImage.url, "=s0", "=s200")),
         object_img = paste0("<img src='", thumb_link, "'>")
       ) %>%
       select("object number" = object_link, title, "image" = object_img)
