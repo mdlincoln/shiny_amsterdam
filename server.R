@@ -1,96 +1,40 @@
-library(leaflet)
-library(ggplot2)
-library(maps)
-library(dplyr)
-
-# From a future version of Shiny
-bindEvent <- function(eventExpr, callback, env=parent.frame(), quoted=FALSE) {
-  eventFunc <- exprToFunction(eventExpr, env, quoted)
-
-  initialized <- FALSE
-  invisible(observe({
-    eventVal <- eventFunc()
-    if (!initialized)
-      initialized <<- TRUE
-    else
-      isolate(callback())
-  }))
-}
-
 shinyServer(function(input, output, session) {
 
-  makeReactiveBinding('selectedLocation')
+  # Reactive data values
 
-  # Draw only those locations within a certain year range, and tally the
-  # number of works made showing each location
-  select_locations <- reactive({
-    selected <- location_data %>%
-    filter(dating.yearLate >= input$year_range[1] &
-             dating.yearEarly <= input$year_range[2]) %>%
-    group_by(place, latitude, longitude) %>%
-    tally()
-    return(selected)
+  min_year <- reactive({
+    input$year_slider[1]
   })
 
-  # Create the map; this is not the "real" map, but rather a proxy
-  # object that lets us control the leaflet map on the page.
-  map <- createLeafletMap(session, 'map')
+  max_year <- reactive({
+    input$year_slider[2]
+  })
 
-  # Functions to run every time the map or filters are changed
+  map_objects <- reactive({
+    location_data %>%
+      filter(dating.yearEarly < max_year() & dating.yearLate >= min_year())
+  })
+
+  map_aggregate <- reactive({
+    map_objects() %>%
+      group_by_("short_place", "longitude", "latitude", "type") %>%
+      summarize(count = n())
+  })
+
+  # Tables
+
+  # Visualizations
+
+  output$amsterdam_map <- renderLeaflet({
+    leaflet() %>%
+      addTiles() %>%
+      fitBounds(lng1 = global_min_lon, lat1 = global_min_lat, lng2 = global_max_lon, lat2 = global_max_lat)
+  })
+
   observe({
-
-    locations <- select_locations()
-
-    # Re-draw the map with each change
-    map$clearShapes()
-
-    # Draw circles for each locaiton on the map
-    map$addCircle(
-      lat = locations$latitude,
-      lng = locations$longitude,
-      radius = ((100 * locations$n) / max(10, input$map_zoom)^2),
-      layerId = locations$place
-    )
+    leafletProxy("amsterdam_map", data = map_aggregate()) %>%
+      clearShapes() %>%
+      addCircles(radius = ~sqrt(count) * 10, popup = ~short_place)
   })
 
-  # Pop-ups on click
-  observe({
-    event <- input$map_shape_click
-    if (is.null(event))
-      return()
-    map$clearPopups()
-
-    locations <- select_locations()
-
-    isolate({
-      location <- locations[locations$place == event$id,]
-      selectedLocation <<- location
-      content <- as.character(tagList(
-        tags$strong(paste(location$place)),
-        tags$br(),
-        paste("Depicted", location$n, "times between", input$year_range[1], "and", input$year_range[2])
-      ))
-      map$showPopup(event$lat, event$lng, content, event$id)
-    })
-  })
-
-  output$desc <- reactive({
-    if (is.null(input$map_bounds))
-      return(list())
-    list(
-      lat = mean(c(input$map_bounds$north, input$map_bounds$south)),
-      lng = mean(c(input$map_bounds$east, input$map_bounds$west)),
-      zoom = input$map_zoom
-    )
-  })
-
-  output$location_plot <- renderPlot({
-    if(is.null(selectedLocation)) {
-      return(NA)
-    } else {
-      selected <- location_data %>% filter(place == as.character(selectedLocation$place))
-      p <- ggplot(selected, aes(x = dating.yearEarly)) + geom_histogram() + xlim(input$year_range[1], input$year_range[2])
-      print(p)
-    }
-  })
 })
