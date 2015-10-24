@@ -68,7 +68,7 @@ shinyServer(function(input, output, session) {
     if(is.null(clicked_place())) {
        map_objects()
     } else {
-      map_objects() <- location_data %>%
+      map_objects() %>%
         filter(short_place == clicked_place())
     }
   })
