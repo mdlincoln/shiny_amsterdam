@@ -3,6 +3,8 @@ library(leaflet)
 library(dplyr)
 library(ggvis)
 library(shinydashboard)
+library(DT)
+library(stringr)
 
 load("data/location_data.RData")
 

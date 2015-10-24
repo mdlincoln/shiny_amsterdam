@@ -64,4 +64,24 @@ shinyServer(function(input, output, session) {
       bind_shiny("location_hist")
   })
 
+  selected_objects <- reactive({
+    if(is.null(clicked_place())) {
+       map_objects()
+    } else {
+      map_objects() <- location_data %>%
+        filter(short_place == clicked_place())
+    }
+  })
+
+  output$object_table <- renderDataTable({
+    selected_objects() %>%
+      mutate(
+        obj_no = substring(id, 4),
+        object_link = paste0("<a href='https://www.rijksmuseum.nl/en/collection/", obj_no, "'>", obj_no, "</a>"),
+        thumb_link = paste0(str_replace(webImage.url, "=s0", "=s300")),
+        object_img = paste0("<img src='", thumb_link, "'>")
+      ) %>%
+      select("object number" = object_link, title, "image" = object_img)
+  }, escape = FALSE)
+
 })
