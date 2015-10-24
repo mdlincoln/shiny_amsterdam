@@ -6,6 +6,8 @@ library(shinydashboard)
 
 load("data/location_data.RData")
 
+location_data <- location_data %>% filter(short_place != "Omval, De")
+
 global_min_lon <- min(location_data$longitude)
 global_max_lon <- max(location_data$longitude)
 global_min_lat <- min(location_data$latitude)
