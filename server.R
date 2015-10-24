@@ -57,6 +57,10 @@ shinyServer(function(input, output, session) {
 
     hist_data %>%
       ggvis(~dating.year) %>%
+      layer_histograms(width = 1) %>%
+      scale_numeric("x", domain = c(1550, 1750)) %>%
+      add_axis("x", format = "####", values = seq(1550, 1750, by = 25)) %>%
+      set_options(width = "auto", height = 200, resizable = FALSE) %>%
       bind_shiny("location_hist")
   })
 

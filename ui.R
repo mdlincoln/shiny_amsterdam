@@ -3,7 +3,7 @@ title <- "Mapping Artistic Attention in Amsterdam, 1550-1750"
 year_slider <- sliderInput("year_slider", label = "Year Range", min = 1550, max = 1750,
                             value = c(1600, 1650), step = 5, sep = "")
 
-amsterdam_map <- leafletOutput("amsterdam_map", width = "100%", height = 600)
+amsterdam_map <- leafletOutput("amsterdam_map", width = "100%", height = 400)
 
 location_hist <- ggvisOutput("location_hist")
 
