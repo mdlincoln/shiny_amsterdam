@@ -28,15 +28,15 @@ sidebar <- dashboardSidebar(
 
 main_map <- tabItem(
   tabName = "main_map",
-  box(width = 12, includeMarkdown("md/about.md")),
+  box(title = title, width = 12, includeMarkdown("md/about.md")),
   box(
     width = 12,
     fluidRow(
       column(3, year_slider, place_types),
       column(9, amsterdam_map)),
     fluidRow(location_hist)),
-  box(width = 6, object_table),
-  box(width = 6, object_info))
+  box(title = "Displayed objects", width = 6, object_table),
+  box(title = "Object details", width = 6, object_info))
 
 
 
