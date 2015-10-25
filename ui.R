@@ -22,7 +22,8 @@ header <- dashboardHeader(title = shortitle)
 sidebar <- dashboardSidebar(
   sidebarMenu(
     menuItem(tabName = "main_map", text = "Map", icon = icon("map-marker")),
-    menuItem(text = "Source code", href = "https://github.com/mdlincoln/shiny_amsterdam", icon = icon("code-fork"))
+    menuItem(text = "Source code", href = "https://github.com/mdlincoln/shiny_amsterdam", icon = icon("code-fork")),
+    menuItem(text = "Matthew Lincoln, 2015", href = "http://matthewlincoln.net")
   )
 )
 
