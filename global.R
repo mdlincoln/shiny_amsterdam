@@ -6,6 +6,7 @@ library(shinydashboard)
 library(DT)
 library(stringr)
 library(markdown)
+library(RColorBrewer)
 
 load("data/location_data.RData")
 

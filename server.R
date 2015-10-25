@@ -39,11 +39,14 @@ shinyServer(function(input, output, session) {
                 lng2 = global_max_lon, lat2 = global_max_lat)
   })
 
+  pal <- colorFactor(brewer.pal(n_distinct(location_data$type), "Paired"), unique(location_data$type))
+
   observe({
     leafletProxy("amsterdam_map", data = map_aggregate()) %>%
       clearShapes() %>%
       addCircles(radius = ~sqrt(count) * 10, popup = ~short_place,
-                 layerId = ~short_place)
+                 layerId = ~short_place, color = ~pal(type), opacity = 0.8) %>%
+      addLegend("bottomright", pal = pal, values = ~type, title = "Place type")
   })
 
   clicked_place <- reactive({
