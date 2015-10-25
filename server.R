@@ -10,6 +10,24 @@ shinyServer(function(input, output, session) {
     input$year_slider[2]
   })
 
+  observe({
+    if(input$all_types > 0) {
+      updateCheckboxGroupInput(session, "place_types",
+                               choices = unique(location_data$type),
+                               selected = unique(location_data$type),
+                               inline = TRUE)
+    }
+  })
+
+  observe({
+    if(input$no_types > 0) {
+      updateCheckboxGroupInput(session, "place_types",
+                               choices = unique(location_data$type),
+                               selected = NULL,
+                               inline = TRUE)
+    }
+  })
+
   place_types <- reactive({
     input$place_types
   })
@@ -34,10 +52,10 @@ shinyServer(function(input, output, session) {
 
   output$amsterdam_map <- renderLeaflet({
     leaflet() %>%
-      addProviderTiles("Esri.WorldGrayCanvas") %>%
+      addProviderTiles("OpenMapSurfer.Grayscale") %>%
       fitBounds(lng1 = global_min_lon, lat1 = global_min_lat,
                 lng2 = global_max_lon, lat2 = global_max_lat) %>%
-      addLegend("bottomright", pal = pal, values = map_aggregate()$type, title = "Place type")
+      addLegend("bottomright", pal = pal, values = location_data$type, title = "Place type")
   })
 
   pal <- colorFactor(brewer.pal(n_distinct(location_data$type), "Paired"), unique(location_data$type))

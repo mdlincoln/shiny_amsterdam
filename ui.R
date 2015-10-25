@@ -9,6 +9,9 @@ place_types <- checkboxGroupInput("place_types", label = "Place Types",
                                   selected = unique(location_data$type),
                                   inline = TRUE)
 
+no_types <- actionButton("no_types", "Clear all types")
+all_types <- actionButton("all_types", "Select all types")
+
 amsterdam_map <- leafletOutput("amsterdam_map", width = "100%", height = 400)
 
 object_table <- dataTableOutput("object_table")
@@ -33,7 +36,7 @@ main_map <- tabItem(
   box(
     width = 12,
     fluidRow(
-      column(3, year_slider, place_types),
+      column(3, year_slider, place_types, all_types, no_types),
       column(9, amsterdam_map)),
     fluidRow(location_hist)),
   box(title = "Displayed objects", width = 6, object_table),
