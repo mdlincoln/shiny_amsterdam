@@ -21,10 +21,12 @@ header <- dashboardHeader(title = title)
 sidebar <- dashboardSidebar(disable = TRUE)
 
 body <- dashboardBody(
-  box(width = 12,
-      amsterdam_map,
-      inputPanel(year_slider, place_types),
-      location_hist),
+  box(
+    width = 12,
+    fluidRow(
+      column(3, inputPanel(year_slider, place_types)),
+      column(9, amsterdam_map)),
+    fluidRow(location_hist)),
   box(width = 6, object_table),
   box(width = 6, object_info)
 )
