@@ -5,6 +5,7 @@ library(ggvis)
 library(shinydashboard)
 library(DT)
 library(stringr)
+library(markdown)
 
 load("data/location_data.RData")
 
