@@ -104,15 +104,18 @@ shinyServer(function(input, output, session) {
 
   output$object_info <- renderUI({
     if(is.null(selected_object()))
-      return(p("Select an object to view in detail."))
+      return(p("Select an object from the table at left to view details."))
 
     object_row <- visible_obj_table()[selected_object(),]
 
     places <- location_data$short_place[location_data$id == object_row$id]
 
     div(
-      if(!is.na(object_row$thumb_link))
-        img(src = str_replace(object_row$thumb_link, "s100", "s0"), width = "100%"),
+      p(if(object_row$thumb_link != "NA") {
+        img(src = str_replace(object_row$thumb_link, "s100", "s0"), width = "100%")
+      } else {
+        "no image available"
+      }),
       p(strong("Title: "), object_row$title),
       p(strong("Date: "), paste(object_row$dating.yearEarly, object_row$dating.yearLate, sep = "-")),
       p(strong("Type: "), object_row$objectTypes.0),
