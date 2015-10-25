@@ -1,48 +1,56 @@
-library(leaflet)
-library(ShinyDash)
+title <- "Mapping Artistic Attention in Amsterdam, 1550-1750"
+shortitle <- "Depicting Amsterdam"
 
-shinyUI(fluidPage(
-  tags$head(tags$link(rel='stylesheet', type='text/css', href='styles.css')),
-  leafletMap(
-    "map", "100%", 400,
-    initialTileLayer = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
-    initialTileLayerAttribution = HTML('Maps by <a href="http://www.mapbox.com/">Mapbox</a>'),
-    options=list(
-      center = c(52.371, 4.898),
-      zoom = 14
-    )
-  ),
-  fluidRow(
-    column(8, offset=3,
-           h2('Locations In Amsterdam'),
-           htmlWidgetOutput(
-             outputId = 'desc',
-             HTML(paste('The map is centered at <span id="lat"></span>, <span id="lng"></span>',
-                        'with a zoom level of <span id="zoom"></span>.<br/>'
-             ))
-           )
-    )
-  ),
-  hr(),
-  fluidRow(
-    column(3,
-           sliderInput(
-             inputId = "year_range",
-             label = "Display Range",
-             min = min(location_data$dating.yearEarly),
-             max = max(location_data$dating.yearLate),
-             value = c(min(location_data$dating.yearEarly), max(location_data$dating.yearLate)),
-             format = "####",
-             step = 1
-           )
-    ),
-    column(4,
-           h4('Visible cities')
-#            tableOutput('data')
-    ),
-    column(5,
-#            h4(id='cityTimeSeriesLabel', class='shiny-text-output')
-            plotOutput('location_plot', width='100%', height='250px')
-    )
+year_slider <- sliderInput("year_slider", label = "Year Range", min = 1550, max = 1750,
+                            value = c(1600, 1650), step = 5, sep = "")
+
+place_types <- checkboxGroupInput("place_types", label = "Place Types",
+                                  choices = unique(location_data$type),
+                                  selected = unique(location_data$type),
+                                  inline = TRUE)
+
+amsterdam_map <- leafletOutput("amsterdam_map", width = "100%", height = 400)
+
+object_table <- dataTableOutput("object_table")
+
+object_info <- uiOutput("object_info")
+
+location_hist <- ggvisOutput("location_hist")
+
+header <- dashboardHeader(title = shortitle)
+
+sidebar <- dashboardSidebar(
+  sidebarMenu(
+    menuItem(tabName = "main_map", text = "Map", icon = icon("map-marker")),
+    menuItem(text = "Source code", href = "https://github.com/mdlincoln/shiny_amsterdam", icon = icon("code-fork")),
+    menuItem(text = "Matthew Lincoln, 2015", href = "http://matthewlincoln.net")
   )
-))
+)
+
+main_map <- tabItem(
+  tabName = "main_map",
+  box(title = title, width = 12, includeMarkdown("md/about.md")),
+  box(
+    width = 12,
+    fluidRow(
+      column(3, year_slider, place_types),
+      column(9, amsterdam_map)),
+    fluidRow(location_hist)),
+  box(title = "Displayed objects", width = 6, object_table),
+  box(title = "Object details", width = 6, object_info))
+
+
+
+body <- dashboardBody(
+  tabItems(
+    main_map
+  )
+)
+
+dashboardPage(
+  header = header,
+  sidebar = sidebar,
+  body = body,
+  title = title,
+  skin = "red"
+)

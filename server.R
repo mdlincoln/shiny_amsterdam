@@ -1,96 +1,127 @@
-library(leaflet)
-library(ggplot2)
-library(maps)
-library(dplyr)
-
-# From a future version of Shiny
-bindEvent <- function(eventExpr, callback, env=parent.frame(), quoted=FALSE) {
-  eventFunc <- exprToFunction(eventExpr, env, quoted)
-
-  initialized <- FALSE
-  invisible(observe({
-    eventVal <- eventFunc()
-    if (!initialized)
-      initialized <<- TRUE
-    else
-      isolate(callback())
-  }))
-}
-
 shinyServer(function(input, output, session) {
 
-  makeReactiveBinding('selectedLocation')
+  # Reactive data values
 
-  # Draw only those locations within a certain year range, and tally the
-  # number of works made showing each location
-  select_locations <- reactive({
-    selected <- location_data %>%
-    filter(dating.yearLate >= input$year_range[1] &
-             dating.yearEarly <= input$year_range[2]) %>%
-    group_by(place, latitude, longitude) %>%
-    tally()
-    return(selected)
+  min_year <- reactive({
+    input$year_slider[1]
   })
 
-  # Create the map; this is not the "real" map, but rather a proxy
-  # object that lets us control the leaflet map on the page.
-  map <- createLeafletMap(session, 'map')
+  max_year <- reactive({
+    input$year_slider[2]
+  })
 
-  # Functions to run every time the map or filters are changed
+  place_types <- reactive({
+    input$place_types
+  })
+
+  map_objects <- reactive({
+    location_data %>%
+      filter(
+        dating.yearEarly < max_year() &
+          dating.yearLate >= min_year() &
+          type %in% place_types())
+  })
+
+  map_aggregate <- reactive({
+    map_objects() %>%
+      group_by_("short_place", "longitude", "latitude", "type") %>%
+      summarize(count = n())
+  })
+
+  # Tables
+
+  # Visualizations
+
+  output$amsterdam_map <- renderLeaflet({
+    leaflet() %>%
+      addProviderTiles("Esri.WorldGrayCanvas") %>%
+      fitBounds(lng1 = global_min_lon, lat1 = global_min_lat,
+                lng2 = global_max_lon, lat2 = global_max_lat) %>%
+      addLegend("bottomright", pal = pal, values = map_aggregate()$type, title = "Place type")
+  })
+
+  pal <- colorFactor(brewer.pal(n_distinct(location_data$type), "Paired"), unique(location_data$type))
+
   observe({
-
-    locations <- select_locations()
-
-    # Re-draw the map with each change
-    map$clearShapes()
-
-    # Draw circles for each locaiton on the map
-    map$addCircle(
-      lat = locations$latitude,
-      lng = locations$longitude,
-      radius = ((100 * locations$n) / max(10, input$map_zoom)^2),
-      layerId = locations$place
-    )
+    leafletProxy("amsterdam_map", data = map_aggregate()) %>%
+      clearShapes() %>%
+      addCircles(radius = ~sqrt(count) * 10, popup = ~short_place,
+                 layerId = ~short_place, color = ~pal(type), opacity = 0.8)
   })
 
-  # Pop-ups on click
-  observe({
-    event <- input$map_shape_click
-    if (is.null(event))
-      return()
-    map$clearPopups()
-
-    locations <- select_locations()
-
-    isolate({
-      location <- locations[locations$place == event$id,]
-      selectedLocation <<- location
-      content <- as.character(tagList(
-        tags$strong(paste(location$place)),
-        tags$br(),
-        paste("Depicted", location$n, "times between", input$year_range[1], "and", input$year_range[2])
-      ))
-      map$showPopup(event$lat, event$lng, content, event$id)
-    })
-  })
-
-  output$desc <- reactive({
-    if (is.null(input$map_bounds))
-      return(list())
-    list(
-      lat = mean(c(input$map_bounds$north, input$map_bounds$south)),
-      lng = mean(c(input$map_bounds$east, input$map_bounds$west)),
-      zoom = input$map_zoom
-    )
-  })
-
-  output$location_plot <- renderPlot({
-    if(is.null(selectedLocation)) {
-      return(NA)
+  clicked_place <- reactive({
+    if(is.null(input$amsterdam_map_shape_click)) {
+      return(NULL)
     } else {
-      selected <- location_data %>% filter(place == as.character(selectedLocation$place))
-      p <- ggplot(selected, aes(x = dating.yearEarly)) + geom_histogram() + xlim(input$year_range[1], input$year_range[2])
-      print(p)
+      return(input$amsterdam_map_shape_click$id)
     }
   })
+
+  observe({
+    if(is.null(clicked_place())) {
+      hist_data <- location_data
+    } else {
+      hist_data <- location_data %>%
+        filter(short_place == clicked_place())
+    }
+
+    hist_data %>%
+      ggvis(~dating.year) %>%
+      layer_histograms(width = 1) %>%
+      scale_numeric("x", domain = c(1550, 1750)) %>%
+      add_axis("x", format = "####", values = seq(1550, 1750, by = 25)) %>%
+      set_options(width = "auto", height = 200, resizable = FALSE) %>%
+      bind_shiny("location_hist")
+  })
+
+  selected_objects <- reactive({
+    if(is.null(clicked_place())) {
+       map_objects()
+    } else {
+      map_objects() %>%
+        filter(short_place == clicked_place())
+    }
+  })
+
+  visible_obj_table <- reactive({
+    selected_objects() %>%
+      mutate(
+        obj_no = substring(id, 4),
+        object_link = paste0("<a href='https://www.rijksmuseum.nl/en/collection/", obj_no, "'>", obj_no, "</a>"),
+        thumb_link = paste0(str_replace(webImage.url, "=s0", "=s100")),
+        object_img = ifelse(webImage.url == "", "no image", paste0("<img src='", thumb_link, "'>"))
+      )
+  })
+
+  output$object_table <- renderDataTable({
+    visible_obj_table() %>%
+      select("object number" = object_link, title, "image" = object_img)
+  }, escape = FALSE, selection = "single", server = FALSE)
+
+  selected_object <- reactive({
+    input$object_table_rows_selected
+  })
+
+  output$object_info <- renderUI({
+    if(is.null(selected_object()))
+      return(p("Select an object from the table at left to view details."))
+
+    object_row <- visible_obj_table()[selected_object(),]
+
+    places <- location_data$short_place[location_data$id == object_row$id]
+
+    div(
+      p(if(object_row$thumb_link != "NA") {
+        img(src = str_replace(object_row$thumb_link, "s100", "s0"), width = "100%")
+      } else {
+        "no image available"
+      }),
+      p(strong("Title: "), object_row$title),
+      p(strong("Date: "), paste(object_row$dating.yearEarly, object_row$dating.yearLate, sep = "-")),
+      p(strong("Type: "), object_row$objectTypes.0),
+      p(strong("Creators: "), paste(na.omit(c(object_row$principalMakers.0.name, object_row$principalMakers.1.name, object_row$principalMakers.2.name, object_row$principalMakers.3.name)), collapse = ", ")),
+      p(strong("Places: "), paste(places, collapse = ", "))
+    )
+  })
+
 })
