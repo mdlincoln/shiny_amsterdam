@@ -34,7 +34,7 @@ shinyServer(function(input, output, session) {
 
   output$amsterdam_map <- renderLeaflet({
     leaflet() %>%
-      addProviderTiles("Acetate.terrain") %>%
+      addProviderTiles("Esri.WorldGrayCanvas") %>%
       fitBounds(lng1 = global_min_lon, lat1 = global_min_lat,
                 lng2 = global_max_lon, lat2 = global_max_lat)
   })
