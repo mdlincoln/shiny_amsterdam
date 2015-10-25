@@ -36,7 +36,8 @@ shinyServer(function(input, output, session) {
     leaflet() %>%
       addProviderTiles("Esri.WorldGrayCanvas") %>%
       fitBounds(lng1 = global_min_lon, lat1 = global_min_lat,
-                lng2 = global_max_lon, lat2 = global_max_lat)
+                lng2 = global_max_lon, lat2 = global_max_lat) %>%
+      addLegend("bottomright", pal = pal, values = map_aggregate()$type, title = "Place type")
   })
 
   pal <- colorFactor(brewer.pal(n_distinct(location_data$type), "Paired"), unique(location_data$type))
@@ -45,8 +46,7 @@ shinyServer(function(input, output, session) {
     leafletProxy("amsterdam_map", data = map_aggregate()) %>%
       clearShapes() %>%
       addCircles(radius = ~sqrt(count) * 10, popup = ~short_place,
-                 layerId = ~short_place, color = ~pal(type), opacity = 0.8) %>%
-      addLegend("bottomright", pal = pal, values = ~type, title = "Place type")
+                 layerId = ~short_place, color = ~pal(type), opacity = 0.8)
   })
 
   clicked_place <- reactive({
