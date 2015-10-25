@@ -80,15 +80,43 @@ shinyServer(function(input, output, session) {
     }
   })
 
-  output$object_table <- renderDataTable({
+  visible_obj_table <- reactive({
     selected_objects() %>%
       mutate(
         obj_no = substring(id, 4),
         object_link = paste0("<a href='https://www.rijksmuseum.nl/en/collection/", obj_no, "'>", obj_no, "</a>"),
-        thumb_link = paste0(str_replace(webImage.url, "=s0", "=s200")),
-        object_img = paste0("<img src='", thumb_link, "'>")
-      ) %>%
+        thumb_link = paste0(str_replace(webImage.url, "=s0", "=s100")),
+        object_img = ifelse(webImage.url == "", "no image", paste0("<img src='", thumb_link, "'>"))
+      )
+  })
+
+  output$object_table <- renderDataTable({
+    visible_obj_table() %>%
       select("object number" = object_link, title, "image" = object_img)
-  }, escape = FALSE)
+  }, escape = FALSE, selection = "single", server = FALSE)
+
+  selected_object <- reactive({
+    input$object_table_rows_selected
+  })
+
+  output$object_info <- renderUI({
+    if(is.null(selected_object()))
+      return(p("Select an object to view in detail."))
+
+    object_row <- visible_obj_table()[selected_object(),]
+
+    places <- location_data$short_place[location_data$id == object_row$id]
+
+    print(object_row$thumb_link)
+    div(
+      if(!is.na(object_row$thumb_link))
+        img(src = str_replace(object_row$thumb_link, "s100", "s600")),
+      p(strong("Title: "), object_row$title),
+      p(strong("Date: "), paste(object_row$dating.yearEarly, object_row$dating.yearLate, sep = "-")),
+      p(strong("Type: "), object_row$objectTypes.0),
+      p(strong("Creators: "), paste(na.omit(c(object_row$principalMakers.0.name, object_row$principalMakers.1.name, object_row$principalMakers.2.name, object_row$principalMakers.3.name)), collapse = ", ")),
+      p(strong("Places: "), paste(places, collapse = ", "))
+    )
+  })
 
 })
