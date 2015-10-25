@@ -110,10 +110,9 @@ shinyServer(function(input, output, session) {
 
     places <- location_data$short_place[location_data$id == object_row$id]
 
-    print(object_row$thumb_link)
     div(
       if(!is.na(object_row$thumb_link))
-        img(src = str_replace(object_row$thumb_link, "s100", "s600")),
+        img(src = str_replace(object_row$thumb_link, "s100", "s0"), width = "100%"),
       p(strong("Title: "), object_row$title),
       p(strong("Date: "), paste(object_row$dating.yearEarly, object_row$dating.yearLate, sep = "-")),
       p(strong("Type: "), object_row$objectTypes.0),
